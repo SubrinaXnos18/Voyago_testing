@@ -153,6 +153,10 @@ class VoyagoTestCase(TestCase):
         self.assertFalse(Package.objects.filter(id=self.package.id).exists())
 
 
+ def test_contact_us_view(self):
+        response = self.client.get(reverse('contact_us'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/contact_us.html')
 
     def test_contact_us_post(self):
         form_data = {
@@ -164,6 +168,34 @@ class VoyagoTestCase(TestCase):
         response = self.client.post(reverse('contact_us'), form_data)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Contact.objects.filter(email='john@example.com').exists())
+
+
+    def test_login_view(self):
+        response = self.client.post(reverse('login'), {
+            'username': 'testuser',
+            'password': 'testpass123'
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith(reverse('bookings')))
+
+ def test_register_view(self):
+        form_data = {
+            'username': 'newuser',
+            'password1': 'newpass123',
+            'password2': 'newpass123'
+        }
+        response = self.client.post(reverse('register'), form_data)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(username='newuser').exists())
+
+ def test_logout_view(self):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('logout'))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith(reverse('index')))
+
+
+
 
 
 
