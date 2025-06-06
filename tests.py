@@ -23,6 +23,27 @@ class VoyagoTestCase(TestCase):
             days=5,
         )
 
+    # Model Tests
+    def test_package_model_str(self):
+        self.assertEqual(str(self.package), 'Test Package')
+
+    def test_booking_model_str(self):
+        booking = Booking.objects.create(user=self.user, package=self.package)
+        self.assertEqual(str(booking), 'testuser - Test Package')
+    
+    def test_diary_model_str(self):
+        diary = Diary.objects.create(user=self.user, text='Test diary entry')
+        self.assertTrue(str(diary).startswith("testuser's Entry -"))
+
+    def test_contact_model_str(self):
+        contact = Contact.objects.create(
+            name='Test Contact',
+            email='test@example.com',
+            contact_number='1234567890',
+            comments='Test comment'
+        )
+        self.assertTrue(str(contact).startswith('Contact from Test Contact -'))
+
 
     # View Tests
     def test_index_view(self):
@@ -30,6 +51,11 @@ class VoyagoTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'core/index.html')
 
+    def test_bookings_view(self):
+        response = self.client.get(reverse('bookings'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/bookings.html')
+        self.assertContains(response, self.package.name)
 
     def test_payment_view_authenticated(self):
         self.client.login(username='testuser', password='testpass123')
@@ -65,6 +91,18 @@ class VoyagoTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.startswith(reverse('login')))
 
+    def test_admin_panel_view(self):
+        self.client.login(username='adminuser', password='adminpass123')
+        response = self.client.get(reverse('admin_panel'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'core/admin_panel.html')
+
+    def test_admin_panel_view_non_admin(self):
+        self.client.login(username='testuser', password='testpass123')
+        response = self.client.get(reverse('admin_panel'))
+        self.assertEqual(response.status_code, 302)
+        print(f"Redirect URL: {response.url}")
+        self.assertTrue(response.url.startswith('/admin/login/'))
 
 
     def test_add_package(self):
